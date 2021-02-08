@@ -1,0 +1,34 @@
+---
+title: "AAMEHS_finalproj"
+author: "Maggie Li (ml4424)"
+date: "2/4/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# load libraries
+library(tidyverse)
+library(leaflet)
+library(sf)
+```
+
+Data source: https://www.ospo.noaa.gov/Products/land/hms.html#data 
+
+```{r}
+# read in smoke data on 1/1/2011 from NOAA
+
+wildfire = st_read("wildfire_data/hms_smoke20110101/hms_smoke20110101.shp")
+wildfire
+
+# reproject
+wildfire_WGS84 <- st_transform(wildfire, 4326)
+
+# map
+leaflet(data = wildfire_WGS84) %>% 
+  addTiles()
+```
+
