@@ -16,19 +16,21 @@ library(leaflet)
 library(sf)
 ```
 
-Data source: https://www.ospo.noaa.gov/Products/land/hms.html#data 
+Data source: https://data-nifc.opendata.arcgis.com/datasets/historic-perimeters-combined-2000-2018/data?geometry=-96.951%2C-9.831%2C-147.224%2C74.202&orderBy=perimeterdatetime&selectedAttribute=fireyear&where=state%20%3D%20%27CA%27
 
 ```{r}
-# read in smoke data on 1/1/2011 from NOAA
+# read in wildfire perimeter data, filter 2011-2018
 
-wildfire = st_read("Historic_Perimeters_Combined_2000-2018-shp/US_HIST_FIRE_PERIMTRS_2000_2018_DD83.shp")
-wildfire
+wildfire_11_18 = st_read("Historic_Perimeters_Combined_2000-2018-shp/US_HIST_FIRE_PERIMTRS_2000_2018_DD83.shp") %>%
+  filter(fireyear >= 2011)
+wildfire_11_18
 
 # reproject
 wildfire_WGS84 <- st_transform(wildfire, 4326)
 
-# map
-leaflet(data = wildfire_WGS84) %>% 
-  addTiles()
+# visualize
+ggplot(data = wildfire_WGS84) +
+    geom_sf()
+
 ```
 
