@@ -17,11 +17,11 @@ library(sf)
 library(janitor)
 ```
 
+## Read in data
+
 Data source: https://data-nifc.opendata.arcgis.com/datasets/historic-perimeters-combined-2000-2018/data?geometry=-96.951%2C-9.831%2C-147.224%2C74.202&orderBy=perimeterdatetime&selectedAttribute=fireyear&where=state%20%3D%20%27CA%27
 
-```{r}
-# read in wildfire perimeter shapefile, filter 2011-2018
-
+```{r read in wildfire perimeter shapefile and filter 2011-2018}
 wf_11_18_shp = st_read("data/Historic_Perimeters_Combined_2000-2018-shp/US_HIST_FIRE_PERIMTRS_2000_2018_DD83.shp") %>% 
   janitor::clean_names() %>%
   filter(fireyear >= 2011)
@@ -40,5 +40,27 @@ wildfire_WGS84 <- st_transform(wf_11_18_shp, 4326)
 wf_11_18 = read_csv("data/Historic_Perimeters_Combined_2011-2018.csv") %>% 
   janitor::clean_names()
 wf_11_18
+```
+## Summary Statistics
+
+Bar graph: x-axis = year (fireyear); y-axis = total acres burned (gisacres)
+```{r bar graph for area burned by wildfire 2011-2018}
+wf_annual_burned = wf_11_18 %>% 
+  group_by(fireyear) %>% 
+  summarize(sum(gisacres)) %>% 
+  rename(annual_burned = "sum(gisacres)")
+
+ggplot(data = wf_annual_burned,
+       aes(x = fireyear, y = annual_burned)) +
+  geom_bar(stat = "identity")
+  
+```
+
+```{r histogram of all wildfire sizes}
+wf_hist = ggplot(wf_11_18,
+       aes(x = gisacres)) +
+  geom_histogram(bins = 30) +
+  geom_density()
+wf_hist
 ```
 
