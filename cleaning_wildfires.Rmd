@@ -64,5 +64,21 @@ wf_hist = ggplot(wf_11_18,
   geom_histogram(bins = 30) +
   geom_density()
 wf_hist
+
+# boxplot showing distribution of Class G fires (largest)
+wf_11_18 %>% filter(gisacres >= 5000) %>% 
+  ggplot(aes(x = fireyear,
+           y = gisacres,
+           group = fireyear)) +
+  geom_boxplot()
+
+# boxplot showing distribution of Class A-F fires (all other fires)
+wf_11_18 %>% filter(gisacres < 5000) %>% 
+  ggplot(aes(x = fireyear,
+           y = gisacres,
+           group = fireyear)) +
+  geom_boxplot()
+
+# Note: want to include all data in the main analysis, since we hypothesize that smaller fires could still have a health impact on a local level (county level)
 ```
 
