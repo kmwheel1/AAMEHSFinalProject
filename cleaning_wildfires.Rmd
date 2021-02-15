@@ -50,11 +50,11 @@ Bar graph: x-axis = year (fireyear); y-axis = total acres burned (gisacres)
 wf_annual_burned = wf_11_18 %>% 
   group_by(fireyear) %>% 
   summarize(sum(gisacres)) %>% 
-  rename(annual_burned = "sum(gisacres)")
+  rename(annual_burned = "sum(gisacres)") 
 
 ggplot(data = wf_annual_burned,
        aes(x = fireyear, y = annual_burned)) +
-  geom_bar(stat = "identity")
+  geom_bar(stat = "identity") + theme_linedraw()
   
 ```
 
@@ -70,14 +70,14 @@ wf_11_18 %>% filter(gisacres >= 5000) %>%
   ggplot(aes(x = fireyear,
            y = gisacres,
            group = fireyear)) +
-  geom_boxplot()
+  geom_boxplot() + theme_linedraw()
 
 # boxplot showing distribution of Class A-F fires (all other fires)
 wf_11_18 %>% filter(gisacres < 5000) %>% 
   ggplot(aes(x = fireyear,
            y = gisacres,
            group = fireyear)) +
-  geom_boxplot()
+  geom_boxplot() + theme_linedraw()
 
 # Note: want to include all data in the main analysis, since we hypothesize that smaller fires could still have a health impact on a local level (county level)
 ```
