@@ -1,0 +1,56 @@
+---
+title: "confounders"
+author: "Maggie Li (ml4424)"
+date: "2/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+```
+
+Population Density Data; downloaded from US Census 
+
+```{r}
+census_pop_density <- read.csv("Data/census_2010_pop_density.csv")
+head(census_pop_density)
+
+#keep columns GCT_STUB.target.geo.id2, HD01, SUBHD0401, SUBHD0402 (population and housing density)
+census_pop_density <- census_pop_density %>% subset(select = c(GCT_STUB.target.geo.id2,
+                                                               HD01,
+                                                               SUBHD0401, 
+                                                               SUBHD0402))
+#delete first three rows
+census_pop_density <- census_pop_density[-c(1,2,3),]
+census_pop_density <- census_pop_density %>% 
+  dplyr::rename(County = GCT_STUB.target.geo.id2) %>%
+  dplyr::rename(total_pop = HD01) %>%
+  dplyr::rename(pop_density = SUBHD0401) %>%
+  dplyr::rename(housing_density = SUBHD0402)
+
+census_pop_density$County <- as.numeric(as.character(census_pop_density$County))
+census_pop_density <- census_pop_density %>%
+  filter(County <= 56045) %>% 
+  filter(County > 1000)  #filter out territories
+census_pop_density 
+# clean county column by adding leading zero
+county_cleaned <- formatC(census_pop_density$County, width = 5, format = "d", flag = "0")
+
+census_pop_density <- cbind(census_pop_density, county_cleaned) %>%
+  dplyr::select(-County)
+
+census_pop_density$county_cleaned<- as.factor(census_pop_density$county_cleaned) 
+census_pop_density <- census_pop_density %>% dplyr::rename(County = county_cleaned)
+
+census_pop_density
+
+# filter california 
+cali_pop_density = census_pop_density %>% 
+  filter(str_detect(County, "^06"))
+```
+
