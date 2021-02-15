@@ -34,6 +34,8 @@ wildfire_WGS84 <- st_transform(wf_11_18_shp, 4326)
 # ggplot(data = wildfire_WGS84) +
 #     geom_sf()
 
+# Note: can probably just use CSV data (see below) for quantitative data manipulation and analysis (e.g. running summary stats and statistical models). shapefile is better for viz if we are including any maps.
+
 ```
 
 ```{r read in wildfire perimeter csv spreedsheet}
