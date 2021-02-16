@@ -1,0 +1,38 @@
+---
+title: "asthma_eda"
+author: "Rachel Tao"
+date: "2/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# load libraries
+
+library(tidyverse)
+library(janitor)
+
+# setup
+
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.asp = 0.6,
+	fig.width = 6,
+	warning = FALSE,
+	out.width = "90%"
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis")
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+```{r pressure, echo=FALSE}
+# load in data
+
+asthma <- read_csv("./data/asthma-ed-visit-rates.csv")
+
+```
