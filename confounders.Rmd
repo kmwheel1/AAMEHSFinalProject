@@ -24,14 +24,16 @@ head(census_pop_density)
 census_pop_density <- census_pop_density %>% subset(select = c(GCT_STUB.target.geo.id2,
                                                                HD01,
                                                                SUBHD0401, 
-                                                               SUBHD0402))
+                                                               SUBHD0402,
+                                                               GCT_STUB.display.label.1))
 #delete first three rows
 census_pop_density <- census_pop_density[-c(1,2,3),]
 census_pop_density <- census_pop_density %>% 
   dplyr::rename(County = GCT_STUB.target.geo.id2) %>%
   dplyr::rename(total_pop = HD01) %>%
   dplyr::rename(pop_density = SUBHD0401) %>%
-  dplyr::rename(housing_density = SUBHD0402)
+  dplyr::rename(housing_density = SUBHD0402) %>% 
+  dplyr::rename(County_name = GCT_STUB.display.label.1)
 
 census_pop_density$County <- as.numeric(as.character(census_pop_density$County))
 census_pop_density <- census_pop_density %>%
@@ -52,5 +54,7 @@ census_pop_density
 # filter california 
 cali_pop_density = census_pop_density %>% 
   filter(str_detect(County, "^06"))
+
+# write_csv(cali_pop_density, "./data/cali_pop_density.csv")
 ```
 

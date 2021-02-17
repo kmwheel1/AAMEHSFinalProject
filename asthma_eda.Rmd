@@ -10,6 +10,8 @@ output: html_document
 
 library(tidyverse)
 library(janitor)
+library(readxl)
+library(leaflet)
 
 # setup
 
@@ -33,6 +35,97 @@ scale_fill_discrete = scale_fill_viridis_d
 ```{r pressure, echo=FALSE}
 # load in data
 
-asthma <- read_csv("./data/asthma-ed-visit-rates.csv")
+asthma_info <- read_excel("./data/asthma-ed-visit-rates-metadata.xlsx")
+
+asthma <- read_csv("./data/asthma-ed-visit-rates.csv") %>% 
+  rename(County_name = Geography)
+
+cali_pop <- read_csv("./data/cali_pop_density.csv") %>% 
+  mutate(County_name = str_replace(County_name, " County", ""))
+
+asthma_pop <- left_join(asthma, cali_pop)
+
+asthma_pop %>% select(County_name, Numerator, total_pop, County) %>% 
+  filter(is.na(total_pop))
+
+# the asthma dataset has values for all of California in addition to each county
 
 ```
+
+```{r}
+# clean dataset
+
+asthma_pop <- asthma_pop %>% 
+  clean_names() %>% 
+  filter(
+    strata == "Total Population",
+    county_name != "California") %>% 
+  select(
+    county_name,
+    county,
+    year,
+    age_group,
+    numerator,
+    rate,
+    total_pop,
+    pop_density,
+    housing_density)
+
+asthma_pop %>% pull(age_group) %>% unique()
+
+asthma_child <- asthma_pop %>% 
+  filter(age_group == "Under 18")
+
+asthma_adult <- asthma_pop %>% 
+  filter(age_group == "18 and Over")
+
+asthma_pop <- asthma_pop %>% 
+  filter(age_group == "All Ages")
+
+```
+
+
+```{r}
+# all ages asthma per county (age-adjusted)
+
+ggplot(asthma_pop, aes(x = year, y = rate, group = year)) +
+  geom_boxplot()
+
+asthma_counties_adj <- asthma_pop %>% 
+  mutate(
+    county_name = factor(county_name),
+    county_name = fct_reorder(county_name, rate)
+  ) %>% 
+  ggplot(aes(x = county_name, y = rate, group = county_name)) +
+  geom_boxplot() +
+  xlab("") +
+  ylab("age-adjusted asthma rate") +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
+
+```{r}
+# all ages asthma per county (crude)
+
+asthma_pop %>% 
+  mutate(
+    crude_rate = numerator/total_pop
+  ) %>% 
+  ggplot(aes(x = year, y = crude_rate, group = year)) +
+  geom_boxplot()
+
+asthma_counties_crude <- asthma_pop %>% 
+  mutate(
+    crude_rate = numerator/total_pop,
+    county_name = factor(county_name),
+    county_name = fct_reorder(county_name, rate)
+  ) %>% 
+  ggplot(aes(x = county_name, y = crude_rate, group = county_name)) +
+  geom_boxplot() +
+  xlab("") +
+  ylab("crude asthma rate") +
+  theme(axis.text.x = element_text(angle = 90))
+
+```
+
