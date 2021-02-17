@@ -1,0 +1,59 @@
+Location ID,Location,Value,Rank,Anomaly (1901-2000 base period),1901-2000 Mean
+CA-001,Alameda County,67.6,89,0.9,66.7
+CA-003,Alpine County,55.4,66,0.2,55.2
+CA-005,Amador County,69.5,86,0.7,68.8
+CA-007,Butte County,70.4,53,-0.1,70.5
+CA-009,Calaveras County,69.8,75,0.3,69.5
+CA-011,Colusa County,72.1,69,0.2,71.9
+CA-013,Contra Costa County,68.7,84,0.7,68
+CA-015,Del Norte County,62.3,102,1.4,60.9
+CA-017,El Dorado County,65.7,75,0.4,65.3
+CA-019,Fresno County,67.7,103,1.5,66.2
+CA-021,Glenn County,71.3,58,-0.1,71.4
+CA-023,Humboldt County,63.9,108,1.5,62.4
+CA-025,Imperial County,86.2,80,0.8,85.4
+CA-027,Inyo County,74.1,82,0.9,73.2
+CA-029,Kern County,74.4,98,1.3,73.1
+CA-031,Kings County,75.9,104,1.4,74.5
+CA-033,Lake County,68.2,69,0.2,68
+CA-035,Lassen County,60,84,0.9,59.1
+CA-037,Los Angeles County,72,105,1.9,70.1
+CA-039,Madera County,68.2,95,1,67.2
+CA-041,Marin County,61.3,92,0.8,60.5
+CA-043,Mariposa County,67.2,81,0.7,66.5
+CA-045,Mendocino County,65.1,88,0.5,64.6
+CA-047,Merced County,73.2,95,1.1,72.1
+CA-049,Modoc County,59.4,85,1,58.4
+CA-051,Mono County,56.7,84,0.9,55.8
+CA-053,Monterey County,67,98,1.2,65.8
+CA-055,Napa County,68.7,80,0.5,68.2
+CA-057,Nevada County,63.7,71,0.3,63.4
+CA-059,Orange County,71.1,95,1.2,69.9
+CA-061,Placer County,65.1,75,0.3,64.8
+CA-063,Plumas County,59.7,82,0.8,58.9
+CA-065,Riverside County,80,78,0.7,79.3
+CA-067,Sacramento County,72.2,81,0.6,71.6
+CA-069,San Benito County,69.2,97,1.3,67.9
+CA-071,San Bernardino County,79.1,71,0.5,78.6
+CA-073,San Diego County,72.5,96,1.3,71.2
+CA-075,San Francisco County,62,102,1.1,60.9
+CA-077,San Joaquin County,71.5,73,0.3,71.2
+CA-079,San Luis Obispo County,69.3,111,2,67.3
+CA-081,San Mateo County,63.1,108,1.8,61.3
+CA-083,Santa Barbara County,66.4,100,1.6,64.8
+CA-085,Santa Clara County,67.2,88,1.1,66.1
+CA-087,Santa Cruz County,64.4,110,2.1,62.3
+CA-089,Shasta County,67.5,84,0.8,66.7
+CA-091,Sierra County,58.9,80,0.6,58.3
+CA-093,Siskiyou County,61.6,102,1.4,60.2
+CA-095,Solano County,70.2,91,1,69.2
+CA-097,Sonoma County,64,70,0.2,63.8
+CA-099,Stanislaus County,71.9,80,0.6,71.3
+CA-101,Sutter County,73.3,80,0.6,72.7
+CA-103,Tehama County,70.4,59,0.1,70.3
+CA-105,Trinity County,64.9,100,1.2,63.7
+CA-107,Tulare County,66.8,103,1.5,65.3
+CA-109,Tuolumne County,61.6,59,0,61.6
+CA-111,Ventura County,67.8,112,2.4,65.4
+CA-113,Yolo County,71.9,70,0.3,71.6
+CA-115,Yuba County,71.6,77,0.4,71.2
