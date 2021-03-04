@@ -1,0 +1,45 @@
+---
+title: "Census Data for Final Project"
+author: "Kylie Wheelock Riley"
+date: "2/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidycensus)
+library(tidyverse)
+
+census_api_key("545c7215e59e244a022aa2f8ba7c4fd66ab3649a")
+```
+
+
+```{r California counties 2010}
+county_pop = get_decennial(geography = "county",
+                           variables = "P001001",
+                           state = "CA"
+                           )
+county_pop %>%
+  ggplot(aes(x = value, y = reorder(NAME, value))) + 
+  geom_point()
+##LA county has by far the largest population, 
+
+household_income = get_acs(geography = "county",
+                           variables = "B19013_001",
+                           state = "CA"
+                           )
+household_income %>%
+  ggplot(aes(x = estimate, y = reorder(NAME, estimate))) + 
+  geom_point()
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
