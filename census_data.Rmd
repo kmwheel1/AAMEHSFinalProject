@@ -14,7 +14,7 @@ census_api_key("545c7215e59e244a022aa2f8ba7c4fd66ab3649a")
 ```
 
 
-```{r California counties 2010}
+```{r County Population 2010}
 county_pop = get_decennial(geography = "county",
                            variables = "P001001",
                            state = "CA"
@@ -22,8 +22,45 @@ county_pop = get_decennial(geography = "county",
 county_pop %>%
   ggplot(aes(x = value, y = reorder(NAME, value))) + 
   geom_point()
-##LA county has by far the largest population, 
+ 
+```
+Los Angeles county is the most populous county in California with just under 10 million people, San Diego and Orange County come in second and third, respectively, with around 3 million each. Alpine County is the least populous county. 
 
+```{r Land Use}
+##Search for land use/ urban rural vars by pulling codebook for census vars
+cdbk2010 = load_variables(2010, "sf1", cache = TRUE)
+
+View(cdbk2010)
+
+
+##Create a list of the relevant urban/ rural vars
+urbanvars = c("H001001", "H002002", "H002005")
+
+##Pull urban/ rural values
+urban_housing = 
+  get_decennial(
+    geography = "county",
+    variables = urbanvars,
+    state = "CA"
+    ) %>% 
+  pivot_wider(
+    names_from = "variable", 
+    values_from = "value"
+    ) 
+
+
+  rename(urban_housing,
+        H001001 = tot_housing,
+        H002002 = urban_hous,
+        H002005 = rural_hous
+        )
+
+urban_housing %>%
+  ggplot(aes(x = value, y = reorder(NAME, value))) + 
+  geom_point()
+```
+
+```{r Household Income using ACS}
 household_income = get_acs(geography = "county",
                            variables = "B19013_001",
                            state = "CA"
@@ -34,12 +71,3 @@ household_income %>%
 
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
