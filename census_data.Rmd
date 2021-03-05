@@ -20,26 +20,32 @@ Getting the population for each CA county from 2010 census
 county_pop = get_decennial(geography = "county",
                            variables = "P001001",
                            state = "CA"
-                           )
+                           ) %>% 
+             select(-GEOID, -variable) %>% ##remove geoid and variable to prep for join
+                  rename(cnty_pop = value) 
 county_pop %>%
-  ggplot(aes(x = value, y = reorder(NAME, value))) + 
+  ggplot(aes(x = cnty_pop, y = reorder(NAME, cnty_pop))) + 
   geom_point()
  
 ```
+
 Los Angeles county is the most populous county in California with just under 10 million people, San Diego and Orange County come in second and third, respectively, with around 3 million each. Alpine County is the least populous county. 
+
 
 
 Calculating the percent urban and percent rural housing from each CA county from 2010 census data 
 ```{r Land Use}
 
 ##Search for land use/ urban rural vars by pulling codebook for census vars
-cdbk2010 = load_variables(2010, "sf1", cache = TRUE)
+#cdbk2010 = load_variables(2010, "sf1", cache = TRUE)
 
-View(cdbk2010)
+#View(cdbk2010)
+#^^not running when knitting 
+
 ##Create a list of the relevant urban/ rural vars
 urbanvars = c("H001001", "H002002", "H002005")
 
-##Pull urban/ rural values, move to wide format, and rename census vars
+##Pull urban/ rural values, pivot to wide format, and rename census vars so they are meaningful
 urban_housing = 
   get_decennial(
     geography = "county",
@@ -58,8 +64,10 @@ urban_housing =
   
 ##calculate % rural and % urban vars
 urban_housing = mutate(urban_housing, 
-         pct_urb = urban_hous / tot_housing, 
-         pct_rural = rural_hous / tot_housing
+         pct_urb = urban_hous / tot_housing,
+         pct_rural = rural_hous / tot_housing, 
+         pct_urb = round(pct_urb, 2), 
+         pct_rural = round(pct_rural,2)
          )
   
 ##plot % urban
@@ -73,16 +81,32 @@ urban_housing %>%
   geom_point()
 ```
 
-Viewing household income from 
-```{r Household Income using ACS}
+Perecent urban and % rural are perfect invesrses, can just use 1 in analysis. 
+
+
+
+Viewing household income from acs from 2006-2010. 
+```{r Household Income}
 household_income = get_acs(geography = "county",
                            variables = "B19013_001",
-                           state = "CA"
-                           )
-household_income %>%
-  ggplot(aes(x = estimate, y = reorder(NAME, estimate))) + 
-  geom_point()
+                           state = "CA",
+                           year = 2010
+                           ) %>% 
+                  select(-GEOID, -variable) %>% 
+                  rename(hshld_income = estimate)
 
+household_income %>%
+  ggplot(aes(x = hshld_income, y = reorder(NAME, hshld_income))) + 
+  geom_point()
 ```
 
 Creating census dataset with all relevant variables 
+```{r Joinind data}
+census_data = left_join(urban_housing, household_income, by = "NAME")
+
+census_data = left_join(census_data, county_pop, by = "NAME") %>% 
+  select(GEOID, NAME, cnty_pop, hshld_income, moe, pct_urb, everything())
+ 
+
+```
+
