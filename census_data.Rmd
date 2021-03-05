@@ -5,15 +5,17 @@ date: "2/27/2021"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 library(tidycensus)
 library(tidyverse)
+library(dplyr)
 
 census_api_key("545c7215e59e244a022aa2f8ba7c4fd66ab3649a")
 ```
 
-
+Getting the population for each CA county from 2010 census
 ```{r County Population 2010}
 county_pop = get_decennial(geography = "county",
                            variables = "P001001",
@@ -26,17 +28,18 @@ county_pop %>%
 ```
 Los Angeles county is the most populous county in California with just under 10 million people, San Diego and Orange County come in second and third, respectively, with around 3 million each. Alpine County is the least populous county. 
 
+
+Calculating the percent urban and percent rural housing from each CA county from 2010 census data 
 ```{r Land Use}
+
 ##Search for land use/ urban rural vars by pulling codebook for census vars
 cdbk2010 = load_variables(2010, "sf1", cache = TRUE)
 
 View(cdbk2010)
-
-
 ##Create a list of the relevant urban/ rural vars
 urbanvars = c("H001001", "H002002", "H002005")
 
-##Pull urban/ rural values
+##Pull urban/ rural values, move to wide format, and rename census vars
 urban_housing = 
   get_decennial(
     geography = "county",
@@ -46,20 +49,31 @@ urban_housing =
   pivot_wider(
     names_from = "variable", 
     values_from = "value"
-    ) 
-
-
-  rename(urban_housing,
-        H001001 = tot_housing,
-        H002002 = urban_hous,
-        H002005 = rural_hous
-        )
-
+    ) %>% 
+  dplyr::rename(
+        tot_housing = H001001,
+        urban_hous =  H002002, 
+        rural_hous = H002005 
+        ) 
+  
+##calculate % rural and % urban vars
+urban_housing = mutate(urban_housing, 
+         pct_urb = urban_hous / tot_housing, 
+         pct_rural = rural_hous / tot_housing
+         )
+  
+##plot % urban
 urban_housing %>%
-  ggplot(aes(x = value, y = reorder(NAME, value))) + 
+  ggplot(aes(x = pct_urb, y = reorder(NAME, pct_urb))) + 
+  geom_point()
+
+##plot % rural
+urban_housing %>%
+  ggplot(aes(x = pct_rural, y = reorder(NAME, pct_rural))) + 
   geom_point()
 ```
 
+Viewing household income from 
 ```{r Household Income using ACS}
 household_income = get_acs(geography = "county",
                            variables = "B19013_001",
@@ -71,3 +85,4 @@ household_income %>%
 
 ```
 
+Creating census dataset with all relevant variables 
