@@ -45,6 +45,7 @@ wildfire_WGS84 <- st_transform(wf_11_18_shp, 4326)
 wf_11_18 = read_csv("data/cali_wildfires/California_Fire_Perimeters.csv") %>% 
   janitor::clean_names() %>%
   filter(year >= 2011)
+
 wf_11_18 %>%
   filter(fire_name == "CAMP")
 ```
