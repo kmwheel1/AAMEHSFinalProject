@@ -19,30 +19,36 @@ library(janitor)
 
 ## Read in data
 
-Data source: https://data-nifc.opendata.arcgis.com/datasets/historic-perimeters-combined-2000-2018/data?geometry=-96.951%2C-9.831%2C-147.224%2C74.202&orderBy=perimeterdatetime&selectedAttribute=fireyear&where=state%20%3D%20%27CA%27
+OLD Data source: https://data-nifc.opendata.arcgis.com/datasets/historic-perimeters-combined-2000-2018/data?geometry=-96.951%2C-9.831%2C-147.224%2C74.202&orderBy=perimeterdatetime&selectedAttribute=fireyear&where=state%20%3D%20%27CA%27
+
+UPDATED data source: https://hub-calfire-forestry.hub.arcgis.com/datasets/california-fire-perimeters-all 
+
+UPDATED Metadata:
+alarm_date = first date of wildfire
+cont_date = last date of wildfire (i.e. when it was contained)
+
 
 ```{r read in wildfire perimeter shapefile and filter 2011-2018}
-wf_11_18_shp = st_read("data/Historic_Perimeters_Combined_2000-2018-shp/US_HIST_FIRE_PERIMTRS_2000_2018_DD83.shp") %>% 
+wf_11_18_shp = st_read("data/cali_wildfires/California_Fire_Perimeters-shp/California_Fire_Perimeters__all_.shp") %>% 
   janitor::clean_names() %>%
-  filter(fireyear >= 2011)
+  filter(year >= 2011)
 wf_11_18_shp
 
 # reproject
 wildfire_WGS84 <- st_transform(wf_11_18_shp, 4326)
-
-# visualize
-# ggplot(data = wildfire_WGS84) +
-#     geom_sf()
 
 # Note: can probably just use CSV data (see below) for quantitative data manipulation and analysis (e.g. running summary stats and statistical models). shapefile is better for viz if we are including any maps.
 
 ```
 
 ```{r read in wildfire perimeter csv spreedsheet}
-wf_11_18 = read_csv("data/Historic_Perimeters_Combined_2011-2018.csv") %>% 
-  janitor::clean_names()
-wf_11_18
+wf_11_18 = read_csv("data/cali_wildfires/California_Fire_Perimeters.csv") %>% 
+  janitor::clean_names() %>%
+  filter(year >= 2011)
+wf_11_18 %>%
+  filter(fire_name == "CAMP")
 ```
+
 ## Summary Statistics
 
 Bar graph: x-axis = year (fireyear); y-axis = total acres burned (gisacres)
