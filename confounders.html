@@ -13096,7 +13096,12 @@ cali_pop_density = census_pop_density %&gt;%
 
 # write_csv(cali_pop_density, &quot;./data/cali_pop_density.csv&quot;)</code></pre>
 <p>Temperature data</p>
-<pre class="r"><code>temp_2011 &lt;- read_csv(&quot;./data/temp_2011.csv&quot;, col_names = TRUE) %&gt;% 
+<pre class="r"><code># NOAA National Climate Data Center, &quot;Climate at a Glance&quot;, county-level mapping
+# month selected is the last month in the time scale
+# summer average temperature, years 2011-2018, all counties (to check specific months)
+# https://www.ncdc.noaa.gov/cag/county/mapping/4/pcp/201702/7/value
+
+temp_2011 &lt;- read_csv(&quot;./data/temp_2011.csv&quot;, col_names = TRUE) %&gt;% 
   mutate(year = 2011)</code></pre>
 <pre><code>## 
 ## ── Column specification ────────────────────────────────────────────────────────
@@ -13193,7 +13198,9 @@ cali_pop_density = census_pop_density %&gt;%
 ##   `1901-2000 Mean` = col_double()
 ## )</code></pre>
 <pre class="r"><code>avg_summer_temp &lt;- rbind(temp_2011, temp_2012, temp_2013, temp_2014, temp_2015,
-                         temp_2016, temp_2017, temp_2018)</code></pre>
+                         temp_2016, temp_2017, temp_2018)
+
+# write_csv(avg_summer_temp, &quot;./data/avg_summer_temp.csv&quot;)</code></pre>
 
 
 
