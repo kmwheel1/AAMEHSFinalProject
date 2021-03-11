@@ -7,15 +7,17 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-```
 
-```{r}
 library(tidyverse)
 library(janitor)
+library(tidycensus)
+
+census_api_key("545c7215e59e244a022aa2f8ba7c4fd66ab3649a")
 ```
 
-Population Density Data; downloaded from US Census 
+###CENSUS DATA
 
+Population Density Data; downloaded from US Census 
 ```{r}
 census_pop_density <- read.csv("Data/census_2010_pop_density.csv")
 head(census_pop_density)
@@ -33,7 +35,7 @@ census_pop_density <- census_pop_density %>%
   dplyr::rename(total_pop = HD01) %>%
   dplyr::rename(pop_density = SUBHD0401) %>%
   dplyr::rename(housing_density = SUBHD0402) %>% 
-  dplyr::rename(County_name = GCT_STUB.display.label.1)
+  dplyr::rename(county_name = GCT_STUB.display.label.1)
 
 census_pop_density$County <- as.numeric(as.character(census_pop_density$County))
 census_pop_density <- census_pop_density %>%
@@ -57,6 +59,86 @@ cali_pop_density = census_pop_density %>%
 
 # write_csv(cali_pop_density, "./data/cali_pop_density.csv")
 ```
+
+Calculating the percent urban and percent rural housing from each CA county from 2010 census data 
+```{r Land Use}
+##Search for land use/ urban rural vars by pulling codebook for census vars
+#cdbk2010 = load_variables(2010, "sf1", cache = TRUE)
+
+#View(cdbk2010)
+#^^not running when knitting 
+
+##Create a list of the relevant urban/ rural vars
+urbanvars = c("H001001", "H002002", "H002005")
+
+##Pull urban/ rural values, pivot to wide format, and rename census vars so they are meaningful
+urban_housing_data = 
+  get_decennial(
+    geography = "county",
+    variables = urbanvars,
+    state = "CA"
+    ) %>% 
+  pivot_wider(
+    names_from = "variable", 
+    values_from = "value"
+    ) %>% 
+  dplyr::rename(
+        tot_housing = H001001,
+        urban_hous =  H002002, 
+        rural_hous = H002005 
+        ) 
+  
+##calculate % rural and % urban vars
+urban_housing_data = mutate(urban_housing_data, 
+         pct_urban = urban_hous / tot_housing,
+         pct_rural = rural_hous / tot_housing, 
+         pct_urban = round(pct_urban, 2), 
+         pct_rural = round(pct_rural,2)
+         )
+  
+##plot % urban
+urban_housing_data %>%
+  ggplot(aes(x = pct_urban, y = reorder(NAME, pct_urban))) + 
+  geom_point()
+
+##plot % rural
+urban_housing_data %>%
+  ggplot(aes(x = pct_rural, y = reorder(NAME, pct_rural))) + 
+  geom_point()
+
+##Perecent urban and % rural are perfect invesrses, can just use 1 in analysis. 
+```
+
+
+Viewing household income from acs from 2006-2010. 
+```{r Household Income}
+household_income_data = get_acs(geography = "county",
+                           variables = "B19013_001",
+                           state = "CA",
+                           year = 2010
+                           ) %>% 
+                  select(-GEOID, -variable) %>% 
+                  rename(hshld_income = estimate)
+
+household_income_data %>%
+  ggplot(aes(x = hshld_income, y = reorder(NAME, hshld_income))) + 
+  geom_point()
+
+```
+
+
+Creating census dataset with all relevant variables 
+```{r Joinind data}
+census_data = left_join(urban_housing_data, household_income_data, by = "NAME") %>% 
+       rename(County = GEOID)
+
+##Want to join cali_pop_data in the census_data dataset, but the join is not working. Count name vars are slightly diff. can also use GEOID, but name is different in cali_pop_data and do not want to interfere with name 
+
+census_data = left_join(census_data, cali_pop_density, by = "County") %>% 
+  select(County, NAME, everything())
+
+```
+
 
 Temperature data
 
