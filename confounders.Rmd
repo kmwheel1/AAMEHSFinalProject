@@ -128,7 +128,7 @@ household_income_data %>%
 
 
 Creating census dataset with all relevant variables 
-```{r Joinind data}
+```{r Joinind Census Data}
 census_data = left_join(urban_housing_data, household_income_data, by = "NAME") %>% 
        rename(County = GEOID)
 
@@ -174,32 +174,30 @@ avg_summer_temp <- rbind(temp_2011, temp_2012, temp_2013, temp_2014, temp_2015,
 
 Annual Precipitation Data
 ```{r precipitation}
-# NOAA National Climate Data Center, "Climate at a Glance", county-level mapping
-# month selected is the last month in the time scale
 # annual precipitation, years 2011-2018, all counties 
 # https://www.ncdc.noaa.gov/cag/county/mapping/4/pcp/201712/12/value
 
-precip_2011 <- read_csv("./data/precip_2011.csv", col_names = TRUE) %>% 
+precip_2011 <- read_csv("./data/precip_2011.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2011)
-precip_2012 <- read_csv("./data/precip_2012.csv", col_names = TRUE) %>% 
+precip_2012 <- read_csv("./data/precip_2012.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2012)
-precip_2013 <- read_csv("./data/precip_2013.csv", col_names = TRUE) %>% 
+precip_2013 <- read_csv("./data/precip_2013.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2013)
-precip_2014 <- read_csv("./data/precip_2014.csv", col_names = TRUE) %>% 
+precip_2014 <- read_csv("./data/precip_2014.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2014)
-precip_2015 <- read_csv("./data/precip_2015.csv", col_names = TRUE) %>% 
+precip_2015 <- read_csv("./data/precip_2015.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2015)
-precip_2016 <- read_csv("./data/precip_2016.csv", col_names = TRUE) %>% 
+precip_2016 <- read_csv("./data/precip_2016.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2016)
-precip_2017 <- read_csv("./data/precip_2017.csv", col_names = TRUE) %>% 
+precip_2017 <- read_csv("./data/precip_2017.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2017)
-precip_2018 <- read_csv("./data/precip_2018.csv", col_names = TRUE) %>% 
+precip_2018 <- read_csv("./data/precip_2018.csv", skip = 3, col_names = TRUE) %>% 
   mutate(year = 2018)
 
 
 annual_precip <- rbind(precip_2011, precip_2012, precip_2013, precip_2014, precip_2015,
                          precip_2016, precip_2017, precip_2018)
 
-write_csv(annual_precip, "./data/annual_precip.csv")
+#write_csv(annual_precip, "./data/annual_precip.csv")
 
 ```
