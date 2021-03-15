@@ -129,3 +129,12 @@ asthma_counties_crude <- asthma_pop %>%
 
 ```
 
+Get under-18 population by county for offset
+
+```{r}
+v10 = load_variables(2010, "sf1", cache = TRUE)
+
+View(v10) # male/female population by age is p0120 something something
+
+```
+

@@ -134,8 +134,57 @@ census_data = left_join(urban_housing_data, household_income_data, by = "NAME") 
 
 census_data = left_join(census_data, cali_pop_density, by = "County") %>% 
   select(County, NAME, everything())
-
+census_data
 ##Created one dataset with all census vars. May want to confirm var names as a group and clean up Environment##
+```
+
+```{r correlation matrix of covariates and exposure}
+### Calculate correlations
+
+
+## join all dfs for correlation matrix
+data_cormat <- census_data %>% 
+  select(-County, -NAME, -county_name) %>% 
+  mutate_all(as.numeric)
+
+v.matrix <- round(cor(data_cormat, use = "pairwise.complete.obs", 
+                    method = c("spearman")), 2)
+
+v.matrix[upper.tri(v.matrix)] <- NA          
+
+viz.cormat <- reshape2::melt(v.matrix, na.rm = TRUE) %>% 
+  dplyr::rename(Correlation = value) 
+
+ v.matrix
+ 
+### Visualization
+
+viz.cormat %>%
+    ggplot(aes(Var1, Var2, fill = Correlation)) +
+ geom_tile(color = "white") +
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                      midpoint = 0.5,  space = "Lab", 
+                      name = "Spearman\nCorrelation") +
+  geom_text(aes(Var1, Var2, label = Correlation), color = "black", size = 5) +
+#  theme_minimal(base_size = 14) + # minimal theme
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, size = 14, hjust = 1),
+    axis.text.y = element_text(vjust = 1, size = 14, hjust = 1),
+  #axis.title.x = element_text(size = 15),
+  #axis.title.y = element_text(size = 15)
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  #legend.justification = c(1, 0),
+  #legend.position = c(0.45, 0.8),
+  legend.direction = "horizontal",
+  legend.text = element_text(size = 14),
+  legend.title = element_text(size = 14)) 
+#  guides(fill = guide_colorbar(barwidth = 8, barheight = 1.5,
+               # title.position = "top", title.hjust = 0.5))
 ```
 
 NOAA DATA
