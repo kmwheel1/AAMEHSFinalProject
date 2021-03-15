@@ -15,6 +15,8 @@ library(tidyverse)
 library(leaflet)
 library(sf)
 library(janitor)
+library(sp)
+library(rgdal)
 ```
 
 ## Read in data
@@ -36,11 +38,19 @@ wf_11_18_shp = st_read("data/cali_wildfires/California_Fire_Perimeters-shp/Calif
 wf_11_18_shp
 
 # reproject
-wildfire_WGS84 <- st_transform(wf_11_18_shp, 4326)
+wf_11_18_shp <- st_transform(wf_11_18_shp, 4326)
 
 # Note: can probably just use CSV data (see below) for quantitative data manipulation and analysis (e.g. running summary stats and statistical models). shapefile is better for viz if we are including any maps.
 
+# save separate shapefiles for each year
+wf_11 = wf_11_18_shp %>% 
+  filter(year == 2011)
+
+# write out shapefile for each year
+# st_write(wf_11, "data/cali_wildfires/California_Fire_Perimeters-shp/cali_wf_11.shp")
+
 ```
+
 
 ```{r read in wildfire perimeter csv spreedsheet}
 wf_11_18 = read_csv("data/cali_wildfires/California_Fire_Perimeters.csv") %>% 
@@ -99,5 +109,47 @@ wf_11_18 %>% filter(gis_acres < 5000) %>%
   geom_boxplot() + theme_linedraw()
 
 # Note: want to include all data in the main analysis, since we hypothesize that smaller fires could still have a health impact on a local level (county level)
+```
+
+## Aggregating wildfire exposure at county level
+
+### Testing on 2011 Wildfires
+
+```{r join wildfire and CA county shapefile}
+# read in county shapefile and filter only CA
+ca_counties = st_read("data/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>%
+  filter(STATEFP == "06")
+
+# check CRS
+st_crs(wf_11)
+st_crs(ca_counties) # different
+
+# reproject ca_counties into the same CRS as wf
+ca_counties <- st_transform(ca_counties, crs = 4326)
+
+wf_counties_11 = st_join(ca_counties, wf_11, left = F) # dataframe contains rows for each county that contained a wildfire
+
+wf_counties_11_18 = st_join(ca_counties, wf_11_18_shp, left = F)
+
+```
+
+```{r get tidied county-level wildfires}
+# number of wildfires per county
+
+# convert sf to dataframe
+st_geometry(wf_counties_11) <- NULL
+st_geometry(wf_counties_11_18) <- NULL
+
+# summarize data by total acres burned and number of fires per county
+wf_11_tidy = wf_counties_11 %>% 
+  group_by(GEOID) %>% 
+  summarize(sum(gis_acres), # total acres burned
+            n()) # number of fires
+
+wf_11_18_tidy = wf_counties_11_18 %>% 
+  group_by(GEOID, year) %>% 
+  summarize(sum(gis_acres), # total acres burned
+            n()) # number of fires
+
 ```
 
