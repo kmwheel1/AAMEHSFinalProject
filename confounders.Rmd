@@ -193,7 +193,7 @@ Temperature data
 ```{r temperature}
 # NOAA National Climate Data Center, "Climate at a Glance", county-level mapping
 # month selected is the last month in the time scale
-# summer average temperature, years 2011-2018, all counties (to check specific months)
+# summer average temperature, years 2011-2018 (june - september), all counties 
 # https://www.ncdc.noaa.gov/cag/county/mapping/4/pcp/201702/7/value
 
 temp_2011 <- read_csv("./data/temp_2011.csv", col_names = TRUE) %>% 
@@ -215,9 +215,10 @@ temp_2018 <- read_csv("./data/temp_2018.csv", col_names = TRUE) %>%
 
 
 avg_summer_temp <- rbind(temp_2011, temp_2012, temp_2013, temp_2014, temp_2015,
-                         temp_2016, temp_2017, temp_2018)
+                         temp_2016, temp_2017, temp_2018) %>% 
+  rename(avg_temp = Value)
 
-# write_csv(avg_summer_temp, "./data/avg_summer_temp.csv")
+write_csv(avg_summer_temp, "./data/avg_summer_temp.csv")
 
 ```
 
