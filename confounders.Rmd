@@ -109,6 +109,42 @@ urban_housing_data %>%
 ##Perecent urban and % rural are perfect invesrses, can just use 1 in analysis. 
 ```
 
+Creating offset for Quasipoisson Analysis from 2010 census. Number of children aged 0-18 in California. 
+```{r offset}
+##Create a list of all of the sex and ageunder 18 vars from census codebook
+offest_vars = c("P012003", "P012004", "P012005", "P012006", "P012027", "P012028", "P012029", "P012030")
+
+##Pull under 18 counts by sex, pivot to wide format, and rename vars so they are meaningful
+offset_data = 
+  get_decennial(
+    geography = "county",
+    variables = offest_vars,
+    state = "CA"
+    ) %>% 
+  pivot_wider(
+    names_from = "variable", 
+    values_from = "value"
+    ) %>% 
+  dplyr::rename(
+        male_0to5 = P012003,
+        male_5to9 =  P012004, 
+        male_10to14 = P012005, 
+        male_15to17 = P012006,
+        female_0to5 = P012027,
+        female_5to9 =  P012028, 
+        female_10to14 = P012029, 
+        female_15to17 = P012030
+        ) 
+
+##Mutate to create the offset for total under 18, under 18 male, and under 18 female
+offset_data = mutate(offset_data, 
+         under_18 = male_0to5 + male_5to9 + male_10to14 + male_15to17 + female_0to5 + female_5to9 + female_10to14 + female_15to17,
+         under_18_male = male_0to5 + male_5to9 + male_10to14 + male_15to17,
+         under_18_female = female_0to5 + female_5to9 + female_10to14 + female_15to17
+         )
+
+write_csv(offset_data, "./data/offset_data.csv")
+```
 
 Viewing household income from acs from 2006-2010. 
 ```{r Household Income}
@@ -126,7 +162,6 @@ household_income_data %>%
 
 ```
 
-
 Creating census dataset with all relevant variables 
 ```{r Joinind Census Data}
 census_data = left_join(urban_housing_data, household_income_data, by = "NAME") %>% 
@@ -140,7 +175,6 @@ census_data
 
 ```{r correlation matrix of covariates and exposure}
 ### Calculate correlations
-
 
 ## join all dfs for correlation matrix
 data_cormat <- census_data %>% 
