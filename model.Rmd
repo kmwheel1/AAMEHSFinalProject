@@ -70,6 +70,7 @@ View(full_data)
 # quasipoisson linear mixed effects regression
 library(lme4)
 library(MASS)
+library(lqmm)
 
 qp_glmm = glmmPQL(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
                   data = full_data,
@@ -78,6 +79,13 @@ qp_glmm = glmmPQL(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hs
                   offset = under_18)
 
 summary(qp_glmm)
+
+
+# quantile regression (a starting attempt)
+
+qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
+                        data = full_data,
+                        ) # lqmm does not allow for poisson (generalized) nature
 
 ```
 
