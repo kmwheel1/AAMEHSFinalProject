@@ -82,6 +82,10 @@ asthma_adult <- asthma_pop %>%
 asthma_pop <- asthma_pop %>% 
   filter(age_group == "All Ages")
 
+# save out only asthma under 18 data for final results
+write_csv(asthma_child,
+          "data/asthma_under18_cleaned.csv")
+
 ```
 
 

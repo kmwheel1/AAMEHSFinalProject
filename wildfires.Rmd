@@ -151,5 +151,8 @@ wf_11_18_tidy = wf_counties_11_18 %>%
   summarize(sum(gis_acres), # total acres burned
             n()) # number of fires
 
+write_csv(wf_11_18_tidy, 
+          "data/wf_cleaned.csv")
+
 ```
 

@@ -1,0 +1,83 @@
+---
+title: "results"
+author: "Maggie Li (ml4424)"
+date: "3/22/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(stats)
+```
+
+
+## Running statistical models
+
+### Joining exposure, covariate, and outcome data
+
+```{r read in datasets}
+# exposure data
+wf_data = read_csv("data/wf_cleaned.csv") %>% 
+  dplyr::select(-"sum(gis_acres)")
+
+# population offset
+offset = read_csv("data/offset_data.csv") %>% 
+  dplyr::select(GEOID, under_18, under_18_male, under_18_female)
+
+# outcome data
+asthma_data = read_csv("data/asthma_under18_cleaned.csv") %>% 
+  dplyr::select(county_name, county, year, numerator) %>% 
+  rename(GEOID = county) %>% 
+  rename(County = county_name)
+
+# covariates
+temperature = read_csv("data/avg_summer_temp.csv") %>% 
+  dplyr::select(Location, avg_temp, year)
+
+precip = read_csv("data/annual_precip.csv") %>% 
+  dplyr::select(Location, Value, year)
+
+temp_precip = left_join(temperature, precip) %>% 
+  rename(precip = Value) %>% 
+  mutate(County = str_remove(string = Location, pattern = " County")) %>% # new column of all CA counties without "County" suffix
+  select(-Location)
+
+census_cov = read_csv("data/census_cov_cleaned.csv") %>% 
+  dplyr::select(County, pct_urban, hshld_income, pop_density) %>% 
+  rename(GEOID = County)
+
+wf_data
+offset
+asthma_data
+temp_precip
+census_cov
+```
+
+```{r}
+full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED data for least populous counties
+  left_join(wf_data) %>% 
+  left_join(offset) %>% 
+  left_join(census_cov) %>% 
+  rename(asthma_counts = numerator) %>% 
+  rename(num_wfs = "n()") %>% 
+  mutate(num_wfs = replace_na(num_wfs, 0)) %>%  # note: check NAs to make sure they mean no fires in the county that year
+  na.omit()
+
+View(full_data)
+```
+
+```{r run models}
+# quasipoisson linear mixed effects regression
+library(lme4)
+library(MASS)
+
+qp_glmm = glmmPQL(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
+                  data = full_data,
+                  random = ~ 1 | GEOID,
+                family = quasipoisson(link = "log"),
+                  offset = under_18)
+
+summary(qp_glmm)
+
+```
+

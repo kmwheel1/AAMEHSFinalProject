@@ -143,7 +143,7 @@ offset_data = mutate(offset_data,
          under_18_female = female_0to5 + female_5to9 + female_10to14 + female_15to17
          )
 
-write_csv(offset_data, "./data/offset_data.csv")
+# write_csv(offset_data, "./data/offset_data.csv")
 ```
 
 Viewing household income from acs from 2006-2010. 
@@ -170,6 +170,8 @@ census_data = left_join(urban_housing_data, household_income_data, by = "NAME") 
 census_data = left_join(census_data, cali_pop_density, by = "County") %>% 
   select(County, NAME, everything())
 census_data
+
+write_csv(census_data,"data/census_cov_cleaned.csv")
 ##Created one dataset with all census vars. May want to confirm var names as a group and clean up Environment##
 ```
 
