@@ -64,6 +64,8 @@ full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED dat
   na.omit()
 
 View(full_data)
+
+max(full_data$num_wfs)
 ```
 
 ```{r run models}
@@ -71,21 +73,46 @@ View(full_data)
 library(lme4)
 library(MASS)
 library(lqmm)
+library(mgcv)
+library(Qtools)
 
-qp_glmm = glmmPQL(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
+qp_glmm_crude = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs,
                   data = full_data,
                   random = ~ 1 | GEOID,
-                family = quasipoisson(link = "log"),
-                  offset = under_18)
+                family = quasipoisson(link = "log"))
 
-summary(qp_glmm)
+summary(qp_glmm_crude)
 
+qp_glmm_full = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs + avg_temp + precip + pop_density + hshld_income,
+                  data = full_data,
+                  random = ~ 1 | GEOID,
+                family = quasipoisson(link = "log"))
+
+summary(qp_glmm_full)
 
 # quantile regression (a starting attempt)
 
-qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
-                        data = full_data,
-                        ) # lqmm does not allow for poisson (generalized) nature
+# Notes from Marianthi OH (3/23/21):
+
+## Either assume continuous outcome for mixed quantile regression; or try rq.counts to have quasipoisson without random intercept (underestimating confidence interval)
+
+# discuss limitation regardless; maybe try both!
+
+# look at distribution of counts; if it "looks normal", maybe use lqmm and assume continuous outcome but if not this will be bad
+
+# look at outcome distribution
+hist(full_data$asthma_counts) # severely right skewed, try rq.counts first
+
+qr_rq.counts_median = rq.counts(asthma_counts ~ num_wfs + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data,
+                         tau = 0.5,
+                         offset = I(log(under_18)))
+coef(qr_rq.counts_median)
+
+# qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
+#                         data = full_data,
+#                         ) # lqmm does not allow for poisson (generalized) nature
 
 ```
 
