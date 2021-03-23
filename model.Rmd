@@ -76,19 +76,40 @@ library(lqmm)
 library(mgcv)
 library(Qtools)
 
+# CRUDE MODEL
 qp_glmm_crude = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs,
                   data = full_data,
                   random = ~ 1 | GEOID,
                 family = quasipoisson(link = "log"))
 
-summary(qp_glmm_crude)
+# how to call summary outputs
+summary(qp_glmm_crude)$tTable[,1] # effect estimates (betas)
+summary(qp_glmm_crude)$tTable[,1][2] # effect estimate for wildfire beta
+summary(qp_glmm_crude)$tTable[,2] # standard errors of betas
+summary(qp_glmm_crude)$tTable[,2][2] # standard error of wildfire beta
 
+# get RR for number of wildfire beta
+# point estimate
+exp(summary(qp_glmm_crude)$tTable[,1])[2]
+# 95% CI
+exp(summary(qp_glmm_crude)$tTable[,1][2] - 1.96*summary(qp_glmm_crude)$tTable[,2][2])
+exp(summary(qp_glmm_crude)$tTable[,1][2] + 1.96*summary(qp_glmm_crude)$tTable[,2][2])
+
+
+# FULL MODEL
 qp_glmm_full = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs + avg_temp + precip + pop_density + hshld_income,
                   data = full_data,
                   random = ~ 1 | GEOID,
                 family = quasipoisson(link = "log"))
 
 summary(qp_glmm_full)
+
+# get RR for number of wildfire beta
+# point estimate
+exp(summary(qp_glmm_full)$tTable[,1])[2]
+# 95% CI
+exp(summary(qp_glmm_full)$tTable[,1][2] - 1.96*summary(qp_glmm_full)$tTable[,2][2])
+exp(summary(qp_glmm_full)$tTable[,1][2] + 1.96*summary(qp_glmm_full)$tTable[,2][2])
 
 # quantile regression (a starting attempt)
 
@@ -108,8 +129,19 @@ qr_rq.counts_median = rq.counts(asthma_counts ~ num_wfs + avg_temp + precip +
                          data = full_data,
                          tau = 0.5,
                          offset = I(log(under_18)))
-coef(qr_rq.counts_median)
 
+coef(qr_rq.counts_median)[2] # effect estimate of wildfires
+qr_rq.counts_median$tTable[2,1] # also effect estimate of wildfires
+qr_rq.counts_median$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_rq.counts_median$tTable[2,1])
+# 95% CI
+exp(qr_rq.counts_median$tTable[2,1] - 1.96*qr_rq.counts_median$tTable[2,2])
+exp(qr_rq.counts_median$tTable[2,1] + 1.96*qr_rq.counts_median$tTable[2,2])
+
+# TRY LQMM
 # qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
 #                         data = full_data,
 #                         ) # lqmm does not allow for poisson (generalized) nature
