@@ -53,7 +53,7 @@ temp_precip
 census_cov
 ```
 
-```{r}
+```{r create full dataset}
 full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED data for least populous counties
   left_join(wf_data) %>% 
   left_join(offset) %>% 
@@ -68,7 +68,7 @@ View(full_data)
 max(full_data$num_wfs)
 ```
 
-```{r run models}
+```{r run quasipoisson mixed model}
 # quasipoisson linear mixed effects regression
 library(lme4)
 library(MASS)
@@ -111,7 +111,9 @@ exp(summary(qp_glmm_full)$tTable[,1])[2]
 exp(summary(qp_glmm_full)$tTable[,1][2] - 1.96*summary(qp_glmm_full)$tTable[,2][2])
 exp(summary(qp_glmm_full)$tTable[,1][2] + 1.96*summary(qp_glmm_full)$tTable[,2][2])
 
-# quantile regression (a starting attempt)
+```
+
+```{r quantile regression (a starting attempt)}
 
 # Notes from Marianthi OH (3/23/21):
 
@@ -124,6 +126,7 @@ exp(summary(qp_glmm_full)$tTable[,1][2] + 1.96*summary(qp_glmm_full)$tTable[,2][
 # look at outcome distribution
 hist(full_data$asthma_counts) # severely right skewed, try rq.counts first
 
+# run rq.counts on 50th percentile
 qr_rq.counts_median = rq.counts(asthma_counts ~ num_wfs + avg_temp + precip + 
                            pop_density + hshld_income,
                          data = full_data,
@@ -140,6 +143,43 @@ exp(qr_rq.counts_median$tTable[2,1])
 # 95% CI
 exp(qr_rq.counts_median$tTable[2,1] - 1.96*qr_rq.counts_median$tTable[2,2])
 exp(qr_rq.counts_median$tTable[2,1] + 1.96*qr_rq.counts_median$tTable[2,2])
+
+
+# run rq.counts on 25th percentile
+qr_rq.counts_25 = rq.counts(asthma_counts ~ num_wfs + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data,
+                         tau = 0.25,
+                         offset = I(log(under_18)))
+
+coef(qr_rq.counts_25)[2] # effect estimate of wildfires
+qr_rq.counts_25$tTable[2,1] # also effect estimate of wildfires
+qr_rq.counts_25$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_rq.counts_25$tTable[2,1])
+# 95% CI
+exp(qr_rq.counts_25$tTable[2,1] - 1.96*qr_rq.counts_25$tTable[2,2])
+exp(qr_rq.counts_25$tTable[2,1] + 1.96*qr_rq.counts_25$tTable[2,2])
+
+# run rq.counts on 75th percentile
+qr_rq.counts_75 = rq.counts(asthma_counts ~ num_wfs + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data,
+                         tau = 0.75,
+                         offset = I(log(under_18)))
+
+coef(qr_rq.counts_75)[2] # effect estimate of wildfires
+qr_rq.counts_75$tTable[2,1] # also effect estimate of wildfires
+qr_rq.counts_75$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_rq.counts_75$tTable[2,1])
+# 95% CI
+exp(qr_rq.counts_75$tTable[2,1] - 1.96*qr_rq.counts_75$tTable[2,2])
+exp(qr_rq.counts_75$tTable[2,1] + 1.96*qr_rq.counts_75$tTable[2,2])
 
 # TRY LQMM
 # qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
