@@ -34,8 +34,11 @@ cont_date = last date of wildfire (i.e. when it was contained)
 wf_11_18_shp = st_read("data/cali_wildfires/California_Fire_Perimeters-shp/California_Fire_Perimeters__all_.shp") %>% 
   janitor::clean_names() %>%
   filter(year >= 2011,
-         year <= 2018)
+         year <= 2018) %>% 
+  mutate(gis_acres = round(gis_acres, 2)) %>% 
+  select("objectid", "year", "alarm_date", "cont_date", "gis_acres", "geometry")
 wf_11_18_shp
+names(wf_11_18_shp)
 
 # reproject
 wf_11_18_shp <- st_transform(wf_11_18_shp, 4326)
@@ -43,16 +46,44 @@ wf_11_18_shp <- st_transform(wf_11_18_shp, 4326)
 # Note: can probably just use CSV data (see below) for quantitative data manipulation and analysis (e.g. running summary stats and statistical models). shapefile is better for viz if we are including any maps.
 
 # save separate shapefiles for each year
-wf_11 = wf_11_18_shp %>% 
+wf_11 = wf_11_18_shp %>%
   filter(year == 2011)
 
-# write out shapefile for each year
-# st_write(wf_11, "data/cali_wildfires/California_Fire_Perimeters-shp/cali_wf_11.shp")
+wf_12 = wf_11_18_shp %>%
+  filter(year == 2012)
 
+wf_13 = wf_11_18_shp %>%
+  filter(year == 2013)
+
+wf_14 = wf_11_18_shp %>%
+  filter(year == 2014)
+
+wf_15 = wf_11_18_shp %>%
+  filter(year == 2015)
+
+wf_16 = wf_11_18_shp %>%
+  filter(year == 2016)
+
+wf_17 = wf_11_18_shp %>%
+  filter(year == 2017)
+
+wf_18 = wf_11_18_shp %>%
+  filter(year == 2018)
+
+# write out shapefile for each year
+st_write(wf_11, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_11.shp")
+st_write(wf_12, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_12.shp")
+st_write(wf_13, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_13.shp")
+st_write(wf_14, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_14.shp")
+st_write(wf_15, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_15.shp")
+st_write(wf_16, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_16.shp")
+st_write(wf_17, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_17.shp")
+st_write(wf_18, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_18.shp")
 ```
 
 
-```{r read in wildfire perimeter csv spreedsheet}
+
+```{r read in wildfire perimeter csv spreedsheet; no spatial ref}
 wf_11_18 = read_csv("data/cali_wildfires/California_Fire_Perimeters.csv") %>% 
   janitor::clean_names() %>%
   filter(year >= 2011,
@@ -113,7 +144,7 @@ wf_11_18 %>% filter(gis_acres < 5000) %>%
 
 ## Aggregating wildfire exposure at county level
 
-### Testing on 2011 Wildfires
+### Exposure 1: Number of wildfires per county
 
 ```{r join wildfire and CA county shapefile}
 # read in county shapefile and filter only CA
@@ -127,11 +158,15 @@ st_crs(ca_counties) # different
 # reproject ca_counties into the same CRS as wf
 ca_counties <- st_transform(ca_counties, crs = 4326)
 
+# join wf and county data for 2011
 wf_counties_11 = st_join(ca_counties, wf_11, left = F) # dataframe contains rows for each county that contained a wildfire
 
+# join wf and county data for 2011-2018 (all study years)
 wf_counties_11_18 = st_join(ca_counties, wf_11_18_shp, left = F)
 
 ```
+
+### 
 
 ```{r get tidied county-level wildfires}
 # number of wildfires per county
@@ -140,19 +175,50 @@ wf_counties_11_18 = st_join(ca_counties, wf_11_18_shp, left = F)
 st_geometry(wf_counties_11) <- NULL
 st_geometry(wf_counties_11_18) <- NULL
 
-# summarize data by total acres burned and number of fires per county
+# summarize data by total acres burned and number of fires per county, for 2011
 wf_11_tidy = wf_counties_11 %>% 
   group_by(GEOID) %>% 
   summarize(sum(gis_acres), # total acres burned
             n()) # number of fires
 
+# summarize data for all years
 wf_11_18_tidy = wf_counties_11_18 %>% 
   group_by(GEOID, year) %>% 
-  summarize(sum(gis_acres), # total acres burned
+  summarize(sum(gis_acres), # total acres burned; not accurate because it is the total area of wildfires that had any area burned within given county,  whether or not all of the burned acreage was within a county boundary
             n()) # number of fires
 
 write_csv(wf_11_18_tidy, 
           "data/wf_cleaned.csv")
 
+```
+
+### Exposure 2: % area burned in county per year 
+
+We used overlap analysis in QGIS to clean the data and get percent wildfire area burned in all CA counties per year, prior to importing it into R.
+
+```{r}
+ca_county_wf_overlap = st_read("data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/overlap/ca_county_wf_overlap.shp")
+ca_county_wf_overlap
+# get rid of geometry, keep only percent overlap (not total area overlap) columns and GEOID
+ca_county_wf_overlap = ca_county_wf_overlap %>% 
+  st_drop_geometry() %>% 
+  dplyr::select(GEOID, cali_wf__1, cali_wf__2, cali_wf__3, cali_wf__4, cali_wf__5, cali_wf__6, cali_wf__7, cali_wf__8)
+
+# rename to clarify years of wf overlap by county
+ca_county_wf_overlap = ca_county_wf_overlap %>% 
+  rename("2011" = cali_wf__1,
+         "2012" = cali_wf__2,
+         "2013" = cali_wf__3,
+         "2014" = cali_wf__4,
+         "2015" = cali_wf__5,
+         "2016" = cali_wf__6,
+         "2017" = cali_wf__7,
+         "2018" = cali_wf__8)
+ca_county_wf_overlap
+view(ca_county_wf_overlap)
+
+# read this out as intermediate data file
+write_csv(ca_county_wf_overlap,
+        "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/overlap/cleaned_wf_overlap.csv")
 ```
 

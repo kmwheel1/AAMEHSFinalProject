@@ -11,14 +11,22 @@ library(stats)
 ```
 
 
-## Running statistical models
+# Running statistical models
 
-### Joining exposure, covariate, and outcome data
+## Joining exposure, covariate, and outcome data
 
 ```{r read in datasets}
-# exposure data
+# exposure data: number of wildfires
 wf_data = read_csv("data/wf_cleaned.csv") %>% 
   dplyr::select(-"sum(gis_acres)")
+
+# exposure data: percent area burned per county
+wf_percburn = read_csv("data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/overlap/cleaned_wf_overlap.csv") %>%
+  pivot_longer("2011":"2018",
+               names_to = "year",
+               values_to = "percent_burned") %>% 
+  mutate(year = as.integer(year))
+wf_percburn
 
 # population offset
 offset = read_csv("data/offset_data.csv") %>% 
@@ -47,13 +55,16 @@ census_cov = read_csv("data/census_cov_cleaned.csv") %>%
   rename(GEOID = County)
 
 wf_data
+wf_percburn
 offset
 asthma_data
 temp_precip
 census_cov
+
 ```
 
 ```{r create full dataset}
+# first analysis with number of wildfires per county per year
 full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED data for least populous counties
   left_join(wf_data) %>% 
   left_join(offset) %>% 
@@ -66,9 +77,19 @@ full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED dat
 View(full_data)
 
 max(full_data$num_wfs)
-```
 
-```{r run quasipoisson mixed model}
+# second analysis with percent burned in county per year
+full_data_percburn = left_join(asthma_data, temp_precip) %>% # note missing asthma ED data for least populous counties
+  left_join(wf_percburn) %>% 
+  left_join(offset) %>% 
+  left_join(census_cov) %>% 
+  rename(asthma_counts = numerator)
+full_data_percburn
+  
+```
+## Run quasipoisson mixed model
+
+```{r reduced model}
 # quasipoisson linear mixed effects regression
 library(lme4)
 library(MASS)
@@ -76,7 +97,7 @@ library(lqmm)
 library(mgcv)
 library(Qtools)
 
-# CRUDE MODEL
+# CRUDE MODEL: number of wildfires
 qp_glmm_crude = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs,
                   data = full_data,
                   random = ~ 1 | GEOID,
@@ -96,7 +117,29 @@ exp(summary(qp_glmm_crude)$tTable[,1][2] - 1.96*summary(qp_glmm_crude)$tTable[,2
 exp(summary(qp_glmm_crude)$tTable[,1][2] + 1.96*summary(qp_glmm_crude)$tTable[,2][2])
 
 
-# FULL MODEL
+# CRUDE MODEL: percent area burned
+qp_glmm_crude_percburn = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + percent_burned,
+                  data = full_data_percburn,
+                  random = ~ 1 | GEOID,
+                family = quasipoisson(link = "log"))
+
+# how to call summary outputs
+summary(qp_glmm_crude_percburn)$tTable[,1] # effect estimates (betas)
+summary(qp_glmm_crude_percburn)$tTable[,1][2] # effect estimate for wildfire beta
+summary(qp_glmm_crude_percburn)$tTable[,2] # standard errors of betas
+summary(qp_glmm_crude_percburn)$tTable[,2][2] # standard error of wildfire beta
+
+# get RR for number of wildfire beta
+# point estimate
+exp(summary(qp_glmm_crude_percburn)$tTable[,1])[2]
+# 95% CI
+exp(summary(qp_glmm_crude_percburn)$tTable[,1][2] - 1.96*summary(qp_glmm_crude_percburn)$tTable[,2][2])
+exp(summary(qp_glmm_crude_percburn)$tTable[,1][2] + 1.96*summary(qp_glmm_crude_percburn)$tTable[,2][2])
+
+```
+
+```{r full model}
+# FULL MODEL: number of wildfires
 qp_glmm_full = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + num_wfs + avg_temp + precip + pop_density + hshld_income,
                   data = full_data,
                   random = ~ 1 | GEOID,
@@ -111,9 +154,27 @@ exp(summary(qp_glmm_full)$tTable[,1])[2]
 exp(summary(qp_glmm_full)$tTable[,1][2] - 1.96*summary(qp_glmm_full)$tTable[,2][2])
 exp(summary(qp_glmm_full)$tTable[,1][2] + 1.96*summary(qp_glmm_full)$tTable[,2][2])
 
+# FULL MODEL: percent area burned
+qp_glmm_full_percburn = glmmPQL(asthma_counts ~ offset(I(log(under_18))) + percent_burned + 
+                                  avg_temp + precip + pop_density + hshld_income,
+                  data = full_data_percburn,
+                  random = ~ 1 | GEOID,
+                family = quasipoisson(link = "log"))
+
+summary(qp_glmm_full_percburn)
+
+# get RR for number of wildfire beta
+# point estimate
+exp(summary(qp_glmm_full_percburn)$tTable[,1])[2]
+# 95% CI
+exp(summary(qp_glmm_full_percburn)$tTable[,1][2] - 1.96*summary(qp_glmm_full_percburn)$tTable[,2][2])
+exp(summary(qp_glmm_full_percburn)$tTable[,1][2] + 1.96*summary(qp_glmm_full_percburn)$tTable[,2][2])
+
 ```
 
-```{r quantile regression (a starting attempt)}
+## Run quantile regression
+
+```{r quantile regression on num wfs}
 
 # Notes from Marianthi OH (3/23/21):
 
@@ -185,6 +246,64 @@ exp(qr_rq.counts_75$tTable[2,1] + 1.96*qr_rq.counts_75$tTable[2,2])
 # qp_quantile = lqmm(asthma_counts ~ num_wfs + avg_temp + precip + pop_density + hshld_income,
 #                         data = full_data,
 #                         ) # lqmm does not allow for poisson (generalized) nature
+
+```
+
+```{r quantile regression on perc area burned}
+# run rq.counts on 50th percentile
+qr_median_percburn = rq.counts(asthma_counts ~ percent_burned + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data_percburn,
+                         tau = 0.5,
+                         offset = I(log(under_18)))
+
+coef(qr_median_percburn)[2] # effect estimate of wildfires
+qr_median_percburn$tTable[2,1] # also effect estimate of wildfires
+qr_median_percburn$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_median_percburn$tTable[2,1])
+# 95% CI
+exp(qr_median_percburn$tTable[2,1] - 1.96*qr_median_percburn$tTable[2,2])
+exp(qr_median_percburn$tTable[2,1] + 1.96*qr_median_percburn$tTable[2,2])
+
+
+# run rq.counts on 25th percentile
+qr_25_percburn = rq.counts(asthma_counts ~ percent_burned + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data_percburn,
+                         tau = 0.25,
+                         offset = I(log(under_18)))
+
+coef(qr_25_percburn)[2] # effect estimate of wildfires
+qr_25_percburn$tTable[2,1] # also effect estimate of wildfires
+qr_25_percburn$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_25_percburn$tTable[2,1])
+# 95% CI
+exp(qr_25_percburn$tTable[2,1] - 1.96*qr_25_percburn$tTable[2,2])
+exp(qr_25_percburn$tTable[2,1] + 1.96*qr_25_percburn$tTable[2,2])
+
+# run rq.counts on 75th percentile
+qr_75_percburn = rq.counts(asthma_counts ~ percent_burned + avg_temp + precip + 
+                           pop_density + hshld_income,
+                         data = full_data_percburn,
+                         tau = 0.75,
+                         offset = I(log(under_18)))
+
+coef(qr_75_percburn)[2] # effect estimate of wildfires
+qr_75_percburn$tTable[2,1] # also effect estimate of wildfires
+qr_75_percburn$tTable[2,2]  # std error of wildfires
+
+# get RRs and 95% CI
+# point estimate
+exp(qr_75_percburn$tTable[2,1])
+# 95% CI
+exp(qr_75_percburn$tTable[2,1] - 1.96*qr_75_percburn$tTable[2,2])
+exp(qr_75_percburn$tTable[2,1] + 1.96*qr_75_percburn$tTable[2,2])
 
 ```
 
