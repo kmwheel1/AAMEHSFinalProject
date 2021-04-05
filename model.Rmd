@@ -76,7 +76,11 @@ full_data = left_join(asthma_data, temp_precip) %>% # note missing asthma ED dat
 
 View(full_data)
 
+min(full_data$num_wfs)
 max(full_data$num_wfs)
+sd(full_data$num_wfs)
+mean(full_data$num_wfs)
+hist(full_data$num_wfs)
 
 # second analysis with percent burned in county per year
 full_data_percburn = left_join(asthma_data, temp_precip) %>% # note missing asthma ED data for least populous counties
@@ -85,6 +89,12 @@ full_data_percburn = left_join(asthma_data, temp_precip) %>% # note missing asth
   left_join(census_cov) %>% 
   rename(asthma_counts = numerator)
 full_data_percburn
+
+min(full_data_percburn$percent_burned)
+max(full_data_percburn$percent_burned)
+sd(full_data_percburn$percent_burned)
+mean(full_data_percburn$percent_burned)
+hist(full_data_percburn$percent_burned)
   
 ```
 ## Run quasipoisson mixed model
