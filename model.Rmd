@@ -8,6 +8,7 @@ output: html_document
 ```{r}
 library(tidyverse)
 library(stats)
+library(tableone)
 ```
 
 
@@ -316,4 +317,40 @@ exp(qr_75_percburn$tTable[2,1] - 1.96*qr_75_percburn$tTable[2,2])
 exp(qr_75_percburn$tTable[2,1] + 1.96*qr_75_percburn$tTable[2,2])
 
 ```
+
+Table 1
+```{r table 1}
+
+#Get total number of wildfires per year
+aggregate(full_data$num_wfs, by=list(year=full_data$year), FUN=sum)
+
+#Get total number of asthma admissions per year
+aggregate(full_data$asthma_counts, by=list(year=full_data$year), FUN=sum)
+
+#Get asthma rates / county
+full_data = full_data %>% 
+mutate(asthma_rate = asthma_counts/under_18,
+        asthma_rate = round(asthma_rate,2)
+  )
+
+#using tableone for wildfire count
+factorVars = ("year")
+
+## Create variable list. 
+vars = c("asthma_rate","num_wfs","pop_density","hshld_income","avg_temp","precip")
+
+tableone = CreateTableOne(vars = vars, strata = "year", data = full_data)
+
+tableone
+
+#using tableone for wildfire percent burned
+
+## Create variable list. 
+vars1 = c("percent_burned")
+
+tableone_perc_burned = CreateTableOne(vars = vars1, strata = "year", data = full_data_percburn)
+
+tableone_perc_burned
+```
+
 
