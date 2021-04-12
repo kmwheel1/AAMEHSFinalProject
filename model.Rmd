@@ -9,6 +9,8 @@ output: html_document
 library(tidyverse)
 library(stats)
 library(tableone)
+library(sf)
+library(tmap)
 ```
 
 
@@ -61,8 +63,9 @@ offset
 asthma_data
 temp_precip
 census_cov
-
 ```
+
+
 
 ```{r create full dataset}
 # first analysis with number of wildfires per county per year
@@ -318,7 +321,7 @@ exp(qr_75_percburn$tTable[2,1] + 1.96*qr_75_percburn$tTable[2,2])
 
 ```
 
-Table 1
+# Table 1
 ```{r table 1}
 
 #Get total number of wildfires per year
@@ -353,4 +356,27 @@ tableone_perc_burned = CreateTableOne(vars = vars1, strata = "year", data = full
 tableone_perc_burned
 ```
 
+# Asthma Admission Chloropleth Map
+
+```{r}
+# read in CA counties shapefile
+ca_counties_shp = st_read(
+  "data/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>% 
+  filter(STATEFP == "06")
+ 
+full_data_asthma_map = full_data %>% 
+  mutate(asthma_rate = 100000 * asthma_counts/under_18) # make extra column to map
+  
+full_data_asthma_map_sf = merge(ca_counties_shp, full_data_asthma_map)
+
+asthma_facet_choropleth = 
+  tm_shape(ca_counties_shp) +
+  tm_borders() +
+  tm_shape(full_data_asthma_map_sf) +
+  tm_polygons(col = "asthma_rate", border.col = "black", palette = "BuGn", 
+          title = "Asthma ED admissions \n per 100,000 under age 18") +
+  tm_facets(by = "year", nrow = 4, free.coords = FALSE)
+asthma_facet_choropleth
+ggsave("figures/asthma_facet_choropleth.png")
+```
 
