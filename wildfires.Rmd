@@ -17,6 +17,7 @@ library(sf)
 library(janitor)
 library(sp)
 library(rgdal)
+library(tmap)
 ```
 
 ## Read in data
@@ -41,7 +42,7 @@ wf_11_18_shp
 names(wf_11_18_shp)
 
 # reproject
-wf_11_18_shp <- st_transform(wf_11_18_shp, 4326)
+wf_11_18_shp <- st_transform(wf_11_18_shp, 4269)
 
 # Note: can probably just use CSV data (see below) for quantitative data manipulation and analysis (e.g. running summary stats and statistical models). shapefile is better for viz if we are including any maps.
 
@@ -71,14 +72,14 @@ wf_18 = wf_11_18_shp %>%
   filter(year == 2018)
 
 # write out shapefile for each year
-st_write(wf_11, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_11.shp")
-st_write(wf_12, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_12.shp")
-st_write(wf_13, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_13.shp")
-st_write(wf_14, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_14.shp")
-st_write(wf_15, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_15.shp")
-st_write(wf_16, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_16.shp")
-st_write(wf_17, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_17.shp")
-st_write(wf_18, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_18.shp")
+# st_write(wf_11, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_11.shp")
+# st_write(wf_12, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_12.shp")
+# st_write(wf_13, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_13.shp")
+# st_write(wf_14, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_14.shp")
+# st_write(wf_15, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_15.shp")
+# st_write(wf_16, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_16.shp")
+# st_write(wf_17, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_17.shp")
+# st_write(wf_18, "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/cali_wf_18.shp")
 ```
 
 
@@ -91,7 +92,7 @@ wf_11_18 = read_csv("data/cali_wildfires/California_Fire_Perimeters.csv") %>%
 view(wf_11_18)
 ```
 
-## Summary Statistics
+## Summary Statistics/Exploratory Analysis
 
 Bar graph: x-axis = year (year); y-axis = total acres burned (gis_acres)
 ```{r bar graph for area burned by wildfire 2011-2018}
@@ -221,4 +222,40 @@ view(ca_county_wf_overlap)
 write_csv(ca_county_wf_overlap,
         "data/cali_wildfires/California_Fire_Perimeters-shp/intermediate/overlap/cleaned_wf_overlap.csv")
 ```
+
+### Facet annual maps of wildfire locations 2011-2018
+
+```{r read in california shapefile}
+ca_counties_shp = st_read(
+  "data/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>% 
+  filter(STATEFP == "06")
+  
+ca_counties_shp
+st_crs(ca_counties_shp)
+```
+
+```{r maps faceted by year with location of EQ epicenters}
+# clean sf file of all eqs
+# facet maps of EQ by year using cleaned sf eq file
+
+wf_class_g = wf_11_18_shp %>% 
+  filter(gis_acres > 5000)
+
+# map all wildfires
+facet_map = tm_shape(ca_counties_shp) +
+  tm_borders()  +
+  tm_shape(wf_11_18_shp) +
+  tm_polygons(col = "gis_acres", border.col = "red", palette = "seq") +
+  tm_facets(by = "year", nrow = 4, free.coords = FALSE)
+
+# map only largest Class G wildfires (>5000 acres)
+tm_shape(ca_counties_shp) +
+  tm_borders()  +
+  tm_shape(wf_class_g) +
+  tm_polygons(col = "gis_acres", border.col = "red", palette = "seq") +
+  tm_facets(by = "year", nrow = 4, free.coords = FALSE)
+facet_map
+```
+
+
 
