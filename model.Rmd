@@ -354,3 +354,49 @@ tableone_perc_burned
 ```
 
 
+```{r}
+# read in CA counties shapefile
+ca_counties_shp = st_read(
+  "data/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>%
+  filter(STATEFP == "06")
+ 
+full_data_asthma_map = full_data %>%
+  mutate(asthma_rate = 100000 * asthma_counts/under_18) # make extra column to map
+ 
+full_data_asthma_map_sf = merge(ca_counties_shp, full_data_asthma_map)
+
+asthma_facet_choropleth =
+  tm_shape(ca_counties_shp) +
+  tm_borders() +
+  tm_shape(full_data_asthma_map_sf) +
+  tm_polygons(col = "asthma_rate", border.col = "black", palette = "BuGn",
+          title = "Asthma ED admissions \n per 100,000 under age 18") +
+  tm_facets(by = "year", nrow = 4, free.coords = FALSE)
+asthma_facet_choropleth
+ggsave("figures/asthma_facet_choropleth.png")
+```
+
+
+### Facet annual maps of wildfire locations 2011-2018
+
+```{r read in california shapefile}
+ca_counties_shp = st_read(
+  "data/cb_2018_us_county_500k/cb_2018_us_county_500k.shp") %>%
+  filter(STATEFP == "06")
+ 
+ca_counties_shp
+st_crs(ca_counties_shp)
+```
+
+```{r maps faceted by year with location of EQ epicenters}
+# clean sf file of all eqs
+# facet maps of EQ by year using cleaned sf eq file
+
+facet_map = tm_shape(ca_counties_shp) +
+  tm_borders()  +
+  tm_shape(wf_11_18_shp) +
+  tm_polygons(col = "gis_acres", border.col = "red", palette = "seq") +
+  tm_facets(by = "year", nrow = 4, free.coords = FALSE)
+
+facet_map
+```
