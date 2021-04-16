@@ -98,6 +98,7 @@ mean(full_data_percburn$percent_burned)
 hist(full_data_percburn$percent_burned)
   
 ```
+
 ## Run quasipoisson mixed model
 
 ```{r reduced model}
@@ -329,7 +330,7 @@ aggregate(full_data$asthma_counts, by=list(year=full_data$year), FUN=sum)
 
 #Get asthma rates / county
 full_data = full_data %>% 
-mutate(asthma_rate = asthma_counts/under_18,
+mutate(asthma_rate = (asthma_counts/under_18)*100000,
         asthma_rate = round(asthma_rate,2)
   )
 
